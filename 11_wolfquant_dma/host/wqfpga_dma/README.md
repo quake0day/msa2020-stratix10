@@ -3,8 +3,8 @@
 `wqfpga_dma.ko` binds to Corundum application ID `0x12348001` and exposes
 `/dev/wqfpga0`. `pread` copies bytes from the FPGA application's scratch RAM
 to a userspace buffer; `pwrite` copies in the other direction. The file offset
-is a byte offset in card RAM. A shared 4 KiB coherent staging buffer and mutex
-make every request bounded and serialized; larger requests are split into 4 KiB
+is a byte offset in card RAM. A shared 8 KiB coherent staging buffer and mutex
+make every request bounded and serialized; larger requests are split into 8 KiB
 DMA descriptors. Userspace never supplies a DMA address.
 
 The upstream `dma_bench.v` instantiates **16 KiB** of RAM. This prototype only
@@ -28,7 +28,7 @@ little-endian signed 32-bit Q20 values `(x, y)`. Each raw integer must be in
 are Q20; squared and cross sums are Q40. No rounding, division, square root,
 or saturation is performed in the FPGA. All valid v1 sums fit in signed 64
 bits. The user pointers in `struct wqfpga_exec` are never DMA addresses: the
-driver copies and validates all input, stages at most 4 KiB per DMA descriptor,
+driver copies and validates all input, stages at most 8 KiB per DMA descriptor,
 holds its mutex from first host-to-card transfer through kernel completion and
 result collection, then copies the result to userspace. The calculation uses
 the low 8 KiB of the same card RAM as the scratch interface, so scratch
@@ -47,7 +47,7 @@ per-client limits and driver-owned buffer handles.
 
 `./wqfpga-moments-test --benchmark /dev/wqfpga0` is a separate measurement
 mode. After five warmups, it makes 200 `EXEC` calls each for 20 pairs (160
-input bytes, one DMA descriptor) and 1024 pairs (8192 bytes, two descriptors),
+input bytes, one DMA descriptor) and 1024 pairs (8192 bytes, one descriptor),
 checking exact output on every call. It reports p50/p99 microseconds measured
 around the whole ioctl, including input/output copies, DMA and kernel wait.
 It also reports p50/p99 for the same integer arithmetic on the CPU, amortized
@@ -101,7 +101,7 @@ The application DMA tag is limited to 13 bits by the Corundum interface mux;
 the driver cycles through tags 1..8191 without producing a truncated tag.
 
 On a DMA timeout or bad completion, the driver disables PCI bus mastering for
-the entire FPGA function, rejects further I/O, and quarantines its 4 KiB DMA
+the entire FPGA function, rejects further I/O, and quarantines its 8 KiB DMA
 buffer and mapping instead of freeing memory that the card might still access.
 This also stops mqnic networking on that function. Power-cycle or reset the
 FPGA before rebooting the Linux host. A failed run is never a successful DMA

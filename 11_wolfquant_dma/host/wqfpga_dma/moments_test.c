@@ -201,10 +201,8 @@ static int benchmark_case(int fd, uint32_t count)
 	}
 	qsort(fpga_us, BENCH_SAMPLES, sizeof(fpga_us[0]), compare_double);
 	qsort(cpu_us, BENCH_SAMPLES, sizeof(cpu_us[0]), compare_double);
-	printf("%u pairs (%u input bytes, %u host-to-card DMA descriptor%s), %u samples:\n",
-	       count, job.input_bytes,
-	       (job.input_bytes + 4095U) / 4096U,
-	       job.input_bytes > 4096U ? "s" : "", BENCH_SAMPLES);
+	printf("%u pairs (%u input bytes), %u samples:\n",
+	       count, job.input_bytes, BENCH_SAMPLES);
 	printf("  FPGA EXEC end-to-end: p50 %.3f us, p99 %.3f us\n",
 	       fpga_us[99], fpga_us[197]);
 	printf("  CPU integer reference: p50 %.3f us, p99 %.3f us (%u repeats/sample)\n",

@@ -24,7 +24,7 @@
  * until the whole address range is validated on the MSA-2020 board.
  */
 #define WQ_CARD_BYTES       8192
-#define WQ_STAGE_BYTES      4096
+#define WQ_STAGE_BYTES      WQ_CARD_BYTES
 #define WQ_STATUS_VALID     BIT(31)
 #define WQ_STATUS_ERROR     GENMASK(27, 24)
 #define WQ_STATUS_TAG       GENMASK(15, 0)
