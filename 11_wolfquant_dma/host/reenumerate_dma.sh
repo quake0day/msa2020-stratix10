@@ -14,7 +14,7 @@ bus=/sys/class/pci_bus/${bdf%:*}/rescan
     exit 2
 }
 [[ -e $bus ]] || { echo "PCIe bus-specific rescan is unavailable: $bus" >&2; exit 1; }
-if grep -Eq '^(mqnic|mqnic_app_dma_smoketest|mqnic_app_dma) ' /proc/modules; then
+if grep -Eq '^(mqnic|mqnic_app_dma_smoketest|mqnic_app_dma|wqfpga_dma) ' /proc/modules; then
     echo "Unload the FPGA DMA drivers before re-enumeration" >&2
     exit 1
 fi

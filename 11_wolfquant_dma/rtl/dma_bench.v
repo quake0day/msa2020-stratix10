@@ -137,6 +137,12 @@ initial begin
         $error("Error: RB_NEXT_PTR overlaps block (instance %m)");
         $finish;
     end
+
+    if (RAM_SEG_COUNT != 2 || RAM_SEG_DATA_WIDTH != 256 ||
+            RAM_SEG_BE_WIDTH != 32 || RAM_SEG_ADDR_WIDTH < 8) begin
+        $error("Error: WolfQuant moments requires two 256-bit RAM segments (instance %m)");
+        $finish;
+    end
 end
 
 // control registers
@@ -198,6 +204,64 @@ reg [RAM_ADDR_WIDTH-1:0] dma_write_block_ram_offset_reg = 0, dma_write_block_ram
 reg [RAM_ADDR_WIDTH-1:0] dma_write_block_ram_offset_mask_reg = 0, dma_write_block_ram_offset_mask_next;
 reg [RAM_ADDR_WIDTH-1:0] dma_write_block_ram_stride_reg = 0, dma_write_block_ram_stride_next;
 
+// WolfQuant moments v1.  Input is up to 1024 pairs of little-endian signed
+// 32-bit Q20 values in the first 8 KiB of application RAM.  Each value must
+// be the sign extension of a signed 24-bit integer.  The five raw integer
+// sums are exact 64-bit values; software applies the Q20/Q40 scaling.
+localparam [2:0] MOM_IDLE = 0, MOM_REQ = 1, MOM_WAIT = 2,
+                 MOM_LOAD = 3, MOM_PROCESS = 4, MOM_FLUSH = 5;
+localparam [7:0] MOM_ERR_COUNT = 1, MOM_ERR_DMA_BUSY = 2,
+                 MOM_ERR_RANGE = 3;
+
+reg [2:0] mom_state_reg = MOM_IDLE;
+reg [31:0] mom_count_reg = 0;
+reg [10:0] mom_remaining_reg = 0;
+reg [3:0] mom_row_remaining_reg = 0;
+reg [RAM_SEG_ADDR_WIDTH-1:0] mom_row_addr_reg = 0;
+reg [RAM_SEG_COUNT-1:0] mom_req_pending_reg = 0;
+reg [RAM_SEG_COUNT-1:0] mom_resp_seen_reg = 0;
+reg [255:0] mom_seg0_reg = 0, mom_seg1_reg = 0;
+reg [511:0] mom_row_data_reg = 0;
+reg mom_done_reg = 0, mom_error_reg = 0;
+reg [7:0] mom_error_code_reg = 0;
+reg signed [63:0] mom_sum_x_reg = 0, mom_sum_y_reg = 0;
+reg signed [63:0] mom_sum_x2_reg = 0, mom_sum_y2_reg = 0;
+reg signed [63:0] mom_sum_xy_reg = 0;
+reg signed [31:0] mom_x_reg = 0, mom_y_reg = 0;
+reg signed [63:0] mom_prod_x2_reg = 0, mom_prod_y2_reg = 0,
+                  mom_prod_xy_reg = 0;
+reg mom_xy_valid_reg = 0, mom_prod_valid_reg = 0;
+
+wire mom_busy = mom_state_reg != MOM_IDLE;
+wire signed [31:0] mom_input_x = mom_row_data_reg[31:0];
+wire signed [31:0] mom_input_y = mom_row_data_reg[63:32];
+wire mom_input_valid = mom_input_x[31:23] == {9{mom_input_x[23]}} &&
+                       mom_input_y[31:23] == {9{mom_input_y[23]}};
+
+wire [RAM_SEG_COUNT-1:0] ram_wr_cmd_ready_int;
+wire [RAM_SEG_COUNT-1:0] ram_wr_done_int;
+wire [RAM_SEG_COUNT-1:0] ram_rd_cmd_ready_int;
+wire [RAM_SEG_COUNT*RAM_SEG_DATA_WIDTH-1:0] ram_rd_resp_data_int;
+wire [RAM_SEG_COUNT-1:0] ram_rd_resp_valid_int;
+wire [RAM_SEG_COUNT-1:0] mom_ram_rd_cmd_valid =
+    mom_state_reg == MOM_REQ ? mom_req_pending_reg : 0;
+wire [RAM_SEG_COUNT-1:0] mom_ram_rd_resp_ready =
+    mom_state_reg == MOM_WAIT ? {RAM_SEG_COUNT{1'b1}} : 0;
+wire dma_idle_for_mom = !dma_read_active_count_reg &&
+    !dma_write_active_count_reg && !dma_read_desc_valid_reg &&
+    !dma_write_desc_valid_reg && !dma_read_block_run_reg &&
+    !dma_write_block_run_reg && !(|dma_ram_wr_cmd_valid) &&
+    !(|dma_ram_rd_cmd_valid) && !(|ram_rd_resp_valid_int);
+
+// dma_psdpram has one read and one write port per segment.  The moments
+// engine takes the read ports only after all DMA descriptors have completed;
+// during a job, incoming DMA RAM commands and new descriptor launches stall.
+assign dma_ram_wr_cmd_ready = mom_busy ? 0 : ram_wr_cmd_ready_int;
+assign dma_ram_wr_done = mom_busy ? 0 : ram_wr_done_int;
+assign dma_ram_rd_cmd_ready = mom_busy ? 0 : ram_rd_cmd_ready_int;
+assign dma_ram_rd_resp_data = mom_busy ? 0 : ram_rd_resp_data_int;
+assign dma_ram_rd_resp_valid = mom_busy ? 0 : ram_rd_resp_valid_int;
+
 assign reg_wr_wait = 1'b0;
 assign reg_wr_ack = reg_wr_ack_reg;
 assign reg_rd_data = reg_rd_data_reg;
@@ -209,7 +273,7 @@ assign m_axis_dma_read_desc_ram_sel = 0;
 assign m_axis_dma_read_desc_ram_addr = dma_read_desc_ram_addr_reg;
 assign m_axis_dma_read_desc_len = dma_read_desc_len_reg;
 assign m_axis_dma_read_desc_tag = dma_read_desc_tag_reg;
-assign m_axis_dma_read_desc_valid = dma_read_desc_valid_reg;
+assign m_axis_dma_read_desc_valid = dma_read_desc_valid_reg && !mom_busy;
 
 assign m_axis_dma_write_desc_dma_addr = dma_write_desc_dma_addr_reg;
 assign m_axis_dma_write_desc_ram_sel = 0;
@@ -218,7 +282,7 @@ assign m_axis_dma_write_desc_imm = dma_write_desc_ram_addr_imm_reg;
 assign m_axis_dma_write_desc_imm_en = dma_write_desc_imm_en_reg;
 assign m_axis_dma_write_desc_len = dma_write_desc_len_reg;
 assign m_axis_dma_write_desc_tag = dma_write_desc_tag_reg;
-assign m_axis_dma_write_desc_valid = dma_write_desc_valid_reg;
+assign m_axis_dma_write_desc_valid = dma_write_desc_valid_reg && !mom_busy;
 
 always @* begin
     reg_wr_ack_next = 1'b0;
@@ -229,7 +293,8 @@ always @* begin
     dma_read_desc_ram_addr_next = dma_read_desc_ram_addr_reg;
     dma_read_desc_len_next = dma_read_desc_len_reg;
     dma_read_desc_tag_next = dma_read_desc_tag_reg;
-    dma_read_desc_valid_next = dma_read_desc_valid_reg && !m_axis_dma_read_desc_ready;
+    dma_read_desc_valid_next = dma_read_desc_valid_reg &&
+        !(m_axis_dma_read_desc_ready && !mom_busy);
 
     dma_read_desc_status_tag_next = dma_read_desc_status_tag_reg;
     dma_read_desc_status_error_next = dma_read_desc_status_error_reg;
@@ -240,7 +305,8 @@ always @* begin
     dma_write_desc_imm_en_next = dma_write_desc_imm_en_reg;
     dma_write_desc_len_next = dma_write_desc_len_reg;
     dma_write_desc_tag_next = dma_write_desc_tag_reg;
-    dma_write_desc_valid_next = dma_write_desc_valid_reg && !m_axis_dma_write_desc_ready;
+    dma_write_desc_valid_next = dma_write_desc_valid_reg &&
+        !(m_axis_dma_write_desc_ready && !mom_busy);
 
     dma_write_desc_status_tag_next = dma_write_desc_status_tag_reg;
     dma_write_desc_status_error_next = dma_write_desc_status_error_reg;
@@ -343,6 +409,9 @@ always @* begin
             RBB+12'h4c8: dma_write_block_ram_offset_next = reg_wr_data;
             RBB+12'h4d0: dma_write_block_ram_offset_mask_next = reg_wr_data;
             RBB+12'h4d8: dma_write_block_ram_stride_next = reg_wr_data;
+            // WolfQuant moments v1 control; handled by the independent FSM.
+            RBB+12'h508: begin end
+            RBB+12'h50c: begin end
             default: reg_wr_ack_next = 1'b0;
         endcase
     end
@@ -442,6 +511,27 @@ always @* begin
             RBB+12'h4d4: reg_rd_data_next = dma_write_block_ram_offset_mask_reg >> 32;
             RBB+12'h4d8: reg_rd_data_next = dma_write_block_ram_stride_reg;
             RBB+12'h4dc: reg_rd_data_next = dma_write_block_ram_stride_reg >> 32;
+            // WolfQuant moments v1, raw integer sums.  Low dword precedes high.
+            RBB+12'h500: reg_rd_data_next = 32'h57514d31;  // WQM1
+            RBB+12'h504: reg_rd_data_next = 32'h00010000;  // ABI 1.0
+            RBB+12'h508: reg_rd_data_next = mom_count_reg;
+            RBB+12'h50c: reg_rd_data_next = 0;
+            RBB+12'h510: begin
+                reg_rd_data_next[0] = mom_busy;
+                reg_rd_data_next[1] = mom_done_reg;
+                reg_rd_data_next[2] = mom_error_reg;
+            end
+            RBB+12'h514: reg_rd_data_next = mom_error_code_reg;
+            RBB+12'h520: reg_rd_data_next = mom_sum_x_reg;
+            RBB+12'h524: reg_rd_data_next = mom_sum_x_reg >> 32;
+            RBB+12'h528: reg_rd_data_next = mom_sum_y_reg;
+            RBB+12'h52c: reg_rd_data_next = mom_sum_y_reg >> 32;
+            RBB+12'h530: reg_rd_data_next = mom_sum_x2_reg;
+            RBB+12'h534: reg_rd_data_next = mom_sum_x2_reg >> 32;
+            RBB+12'h538: reg_rd_data_next = mom_sum_y2_reg;
+            RBB+12'h53c: reg_rd_data_next = mom_sum_y2_reg >> 32;
+            RBB+12'h540: reg_rd_data_next = mom_sum_xy_reg;
+            RBB+12'h544: reg_rd_data_next = mom_sum_xy_reg >> 32;
             default: reg_rd_ack_next = 1'b0;
         endcase
     end
@@ -469,7 +559,7 @@ always @* begin
                 dma_read_block_run_next = 1'b0;
             end
         end else begin
-            if (!dma_read_desc_valid_reg || m_axis_dma_read_desc_ready) begin
+            if (!dma_read_desc_valid_reg || (m_axis_dma_read_desc_ready && !mom_busy)) begin
                 dma_read_block_dma_offset_next = dma_read_block_dma_offset_reg + dma_read_block_dma_stride_reg;
                 dma_read_desc_dma_addr_next = dma_read_block_dma_base_addr_reg + (dma_read_block_dma_offset_reg & dma_read_block_dma_offset_mask_reg);
                 dma_read_block_ram_offset_next = dma_read_block_ram_offset_reg + dma_read_block_ram_stride_reg;
@@ -491,7 +581,7 @@ always @* begin
                 dma_write_block_run_next = 1'b0;
             end
         end else begin
-            if (!dma_write_desc_valid_reg || m_axis_dma_write_desc_ready) begin
+            if (!dma_write_desc_valid_reg || (m_axis_dma_write_desc_ready && !mom_busy)) begin
                 dma_write_block_dma_offset_next = dma_write_block_dma_offset_reg + dma_write_block_dma_stride_reg;
                 dma_write_desc_dma_addr_next = dma_write_block_dma_base_addr_reg + (dma_write_block_dma_offset_reg & dma_write_block_dma_offset_mask_reg);
                 dma_write_block_ram_offset_next = dma_write_block_ram_offset_reg + dma_write_block_ram_stride_reg;
@@ -589,6 +679,143 @@ always @(posedge clk) begin
     end
 end
 
+// The host first completes its H2C DMA into RAM, then starts this engine.
+// New descriptors and RAM accesses are held off while the engine owns the
+// read ports.  On completion the existing DMA read/write path resumes.
+always @(posedge clk) begin
+    mom_xy_valid_reg <= 1'b0;
+    mom_prod_valid_reg <= mom_xy_valid_reg;
+
+    if (mom_xy_valid_reg) begin
+        mom_prod_x2_reg <= $signed(mom_x_reg) * $signed(mom_x_reg);
+        mom_prod_y2_reg <= $signed(mom_y_reg) * $signed(mom_y_reg);
+        mom_prod_xy_reg <= $signed(mom_x_reg) * $signed(mom_y_reg);
+    end
+    if (mom_prod_valid_reg) begin
+        mom_sum_x2_reg <= mom_sum_x2_reg + mom_prod_x2_reg;
+        mom_sum_y2_reg <= mom_sum_y2_reg + mom_prod_y2_reg;
+        mom_sum_xy_reg <= mom_sum_xy_reg + mom_prod_xy_reg;
+    end
+
+    if (reg_wr_en && !reg_wr_ack_reg) begin
+        if ({reg_wr_addr >> 2, 2'b00} == RBB+12'h508 && !mom_busy)
+            mom_count_reg <= reg_wr_data;
+
+        if ({reg_wr_addr >> 2, 2'b00} == RBB+12'h50c && !mom_busy) begin
+            if (reg_wr_data[0]) begin
+                mom_done_reg <= 1'b0;
+                mom_error_reg <= 1'b0;
+                mom_error_code_reg <= 0;
+                mom_sum_x_reg <= 0;
+                mom_sum_y_reg <= 0;
+                mom_sum_x2_reg <= 0;
+                mom_sum_y2_reg <= 0;
+                mom_sum_xy_reg <= 0;
+                mom_xy_valid_reg <= 1'b0;
+                mom_prod_valid_reg <= 1'b0;
+
+                if (!mom_count_reg || mom_count_reg > 1024) begin
+                    mom_done_reg <= 1'b1;
+                    mom_error_reg <= 1'b1;
+                    mom_error_code_reg <= MOM_ERR_COUNT;
+                end else if (!dma_idle_for_mom) begin
+                    mom_done_reg <= 1'b1;
+                    mom_error_reg <= 1'b1;
+                    mom_error_code_reg <= MOM_ERR_DMA_BUSY;
+                end else begin
+                    mom_remaining_reg <= mom_count_reg[10:0];
+                    mom_row_addr_reg <= 0;
+                    mom_req_pending_reg <= {RAM_SEG_COUNT{1'b1}};
+                    mom_resp_seen_reg <= 0;
+                    mom_state_reg <= MOM_REQ;
+                end
+            end else if (reg_wr_data[1]) begin
+                mom_done_reg <= 1'b0;
+                mom_error_reg <= 1'b0;
+                mom_error_code_reg <= 0;
+            end
+        end
+    end
+
+    case (mom_state_reg)
+        MOM_REQ: begin
+            mom_req_pending_reg <= mom_req_pending_reg & ~ram_rd_cmd_ready_int;
+            if (!(|(mom_req_pending_reg & ~ram_rd_cmd_ready_int)))
+                mom_state_reg <= MOM_WAIT;
+        end
+        MOM_WAIT: begin
+            if (ram_rd_resp_valid_int[0] && mom_ram_rd_resp_ready[0]) begin
+                mom_seg0_reg <= ram_rd_resp_data_int[0 +: 256];
+                mom_resp_seen_reg[0] <= 1'b1;
+            end
+            if (ram_rd_resp_valid_int[1] && mom_ram_rd_resp_ready[1]) begin
+                mom_seg1_reg <= ram_rd_resp_data_int[256 +: 256];
+                mom_resp_seen_reg[1] <= 1'b1;
+            end
+            if (&mom_resp_seen_reg)
+                mom_state_reg <= MOM_LOAD;
+        end
+        MOM_LOAD: begin
+            mom_row_data_reg <= {mom_seg1_reg, mom_seg0_reg};
+            mom_row_remaining_reg <= mom_remaining_reg > 8 ? 4'd8 :
+                                     mom_remaining_reg[3:0];
+            mom_state_reg <= MOM_PROCESS;
+        end
+        MOM_PROCESS: begin
+            if (!mom_input_valid) begin
+                mom_xy_valid_reg <= 1'b0;
+                mom_prod_valid_reg <= 1'b0;
+                mom_done_reg <= 1'b1;
+                mom_error_reg <= 1'b1;
+                mom_error_code_reg <= MOM_ERR_RANGE;
+                mom_state_reg <= MOM_IDLE;
+            end else begin
+                mom_x_reg <= mom_input_x;
+                mom_y_reg <= mom_input_y;
+                mom_xy_valid_reg <= 1'b1;
+                mom_sum_x_reg <= mom_sum_x_reg +
+                    {{32{mom_input_x[31]}}, mom_input_x};
+                mom_sum_y_reg <= mom_sum_y_reg +
+                    {{32{mom_input_y[31]}}, mom_input_y};
+                mom_row_data_reg <= mom_row_data_reg >> 64;
+                mom_remaining_reg <= mom_remaining_reg - 1'b1;
+                mom_row_remaining_reg <= mom_row_remaining_reg - 1'b1;
+
+                if (mom_remaining_reg == 1) begin
+                    mom_state_reg <= MOM_FLUSH;
+                end else if (mom_row_remaining_reg == 1) begin
+                    mom_row_addr_reg <= mom_row_addr_reg + 1'b1;
+                    mom_req_pending_reg <= {RAM_SEG_COUNT{1'b1}};
+                    mom_resp_seen_reg <= 0;
+                    mom_state_reg <= MOM_REQ;
+                end
+            end
+        end
+        MOM_FLUSH: begin
+            if (!mom_xy_valid_reg && !mom_prod_valid_reg) begin
+                mom_done_reg <= 1'b1;
+                mom_state_reg <= MOM_IDLE;
+            end
+        end
+        default: begin end
+    endcase
+
+    if (rst) begin
+        mom_state_reg <= MOM_IDLE;
+        mom_count_reg <= 0;
+        mom_done_reg <= 1'b0;
+        mom_error_reg <= 1'b0;
+        mom_error_code_reg <= 0;
+        mom_xy_valid_reg <= 1'b0;
+        mom_prod_valid_reg <= 1'b0;
+        mom_sum_x_reg <= 0;
+        mom_sum_y_reg <= 0;
+        mom_sum_x2_reg <= 0;
+        mom_sum_y2_reg <= 0;
+        mom_sum_xy_reg <= 0;
+    end
+end
+
 dma_psdpram #(
     .SIZE(16384),
     .SEG_COUNT(RAM_SEG_COUNT),
@@ -607,19 +834,21 @@ dma_ram_inst (
     .wr_cmd_be(dma_ram_wr_cmd_be),
     .wr_cmd_addr(dma_ram_wr_cmd_addr),
     .wr_cmd_data(dma_ram_wr_cmd_data),
-    .wr_cmd_valid(dma_ram_wr_cmd_valid),
-    .wr_cmd_ready(dma_ram_wr_cmd_ready),
-    .wr_done(dma_ram_wr_done),
+    .wr_cmd_valid(mom_busy ? {RAM_SEG_COUNT{1'b0}} : dma_ram_wr_cmd_valid),
+    .wr_cmd_ready(ram_wr_cmd_ready_int),
+    .wr_done(ram_wr_done_int),
 
     /*
      * Read port
      */
-    .rd_cmd_addr(dma_ram_rd_cmd_addr),
-    .rd_cmd_valid(dma_ram_rd_cmd_valid),
-    .rd_cmd_ready(dma_ram_rd_cmd_ready),
-    .rd_resp_data(dma_ram_rd_resp_data),
-    .rd_resp_valid(dma_ram_rd_resp_valid),
-    .rd_resp_ready(dma_ram_rd_resp_ready)
+    .rd_cmd_addr(mom_busy ? {RAM_SEG_COUNT{mom_row_addr_reg}} :
+                 dma_ram_rd_cmd_addr),
+    .rd_cmd_valid(mom_busy ? mom_ram_rd_cmd_valid : dma_ram_rd_cmd_valid),
+    .rd_cmd_ready(ram_rd_cmd_ready_int),
+    .rd_resp_data(ram_rd_resp_data_int),
+    .rd_resp_valid(ram_rd_resp_valid_int),
+    .rd_resp_ready(mom_busy ? mom_ram_rd_resp_ready :
+                   dma_ram_rd_resp_ready)
 );
 
 endmodule

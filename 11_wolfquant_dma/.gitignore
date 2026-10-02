@@ -1,4 +1,6 @@
 output_files/
+sim/work/
+sim/transcript.log
 build_dma.log
 fit_retry.log
 sta.log

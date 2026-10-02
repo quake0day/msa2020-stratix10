@@ -14,12 +14,15 @@ module:
 
 tool:
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -D_FILE_OFFSET_BITS=64 -o wqfpga-loopback loopback.c
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -o wqfpga-moments-test moments_test.c
 
 test:
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -o wqfpga-tag-test tag_test.c
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -o wqfpga-moments-test moments_test.c
 	./wqfpga-tag-test
+	./wqfpga-moments-test --self-test
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(CURDIR) clean
-	$(RM) wqfpga-loopback wqfpga-tag-test
+	$(RM) wqfpga-loopback wqfpga-moments-test wqfpga-tag-test
 endif
