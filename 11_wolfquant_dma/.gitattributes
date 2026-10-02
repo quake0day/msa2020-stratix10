@@ -1,0 +1,6 @@
+*.sh text eol=lf
+Makefile text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+ip/* whitespace=-trailing-space
+sync_reset.sdc whitespace=-trailing-space

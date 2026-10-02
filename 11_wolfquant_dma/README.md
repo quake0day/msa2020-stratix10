@@ -1,0 +1,25 @@
+# MSA-2020 Corundum application DMA bring-up
+
+This is an isolated copy of the proven MSA-2020 `5_Corundum_fork_on_MSA2020` Quartus project. The new build enables Corundum's application DMA port and its upstream `dma_bench` block. It does not change the CTF Golden image. The bounded userspace interface under `host/wqfpga_dma` is a transport prototype, not yet a WolfQuant production accelerator.
+
+## Data path
+
+`dma_alloc_coherent` host buffer → PCIe DMA read → 16 KiB application RAM → PCIe DMA write → second host buffer → byte comparison. The application control registers are on BAR2, while the original mqnic NIC registers remain on BAR0. BAR2 is a separate 16 MiB, 64-bit prefetchable window as in the Corundum Stratix 10 example. The application ID is `0x12348001`; its DMA benchmark register block type is `0x12348101`.
+
+The bitstream uses upstream Corundum application RTL under the BSD-2-Clause-Views license. The bounded Linux self-test in `host/mqnic_app_dma_smoketest` allocates its own coherent buffer and never accepts a raw host physical address from userspace. It checks completion validity, tags, error flags, timeout and every returned byte. The default test is 256 bytes; `test_len=4096` can test a larger transfer, up to 8192 bytes. This validates transport correctness, not sustained throughput.
+
+## Build and staged validation
+
+Build with Quartus Prime Pro 23.3 in this directory: `quartus_sh --flow compile wolfquant_dma -c wolfquant_dma`. The QSF currently references the local upstream Corundum checkout at `H:/led_ctrl/05_corundum/corundum`; adjust those source paths if building elsewhere. Check Fitter and Timing Analyzer results before programming `output_files/wolfquant_dma.sof` by JTAG. Keep the known-good Golden bitstream and `H:/msa2020-ctf/infra/golden_reset.sh` available for rollback. Only JTAG-program the FPGA; do not turn off the Linux host or its fans.
+
+On Linux, rebuild `~/corundum/modules/mqnic/mqnic.ko` for the running kernel. Copy the self-test source as a sibling `~/corundum/modules/mqnic_app_dma_smoketest` and build it there, so its `Makefile` finds `../mqnic/Module.symvers`. From Git Bash on the Windows JTAG host, `host/program_dma.sh` pauses the temperature poller, removes the old Linux endpoint, programs this DMA SOF, and rescans the empty child PCIe bus so Linux can resize and relocate the parent bridge window for both 16 MiB BARs. The Linux half is `host/reenumerate_dma.sh prepare|finish`. Never repair this build's bridge from BAR0 alone. Confirm both BAR resources are assigned and inside the bridge window before any MMIO or driver load. Run `host/verify_on_board.sh` for 256-byte and 4096-byte bidirectional comparisons. A pass must include fresh `DMA roundtrip passed` entries in `dmesg`, with no timeout or error. Restore Golden after the hardware test with **`H:/msa2020-ctf/infra/golden_reset.sh --challenge bar-fuzzing`**, which also restores Golden's bridge aperture and enables its BAR decoding; `program_dma.sh` is intentionally DMA-image-only.
+
+Once the one-shot self-test passes, unload it and run `host/verify_user_dma.sh` with the mutually exclusive `host/wqfpga_dma` driver to expose `/dev/wqfpga0`. Its `pread`/`pwrite` calls perform bounded, serialized DMA to the low 8 KiB of the card's 16 KiB scratch RAM. The userspace loopback tool checks varied offsets and lengths over 1 MiB and 32 MiB repeated transfers; the latter also exercises completion-tag wrap. The next milestone is a driver-owned submission queue with versioned descriptors, explicit buffer ownership and completion tags, then a WolfQuant compute kernel. Benchmark host→FPGA→host throughput and latency with multiple buffer sizes before claiming acceleration.
+
+## Hardware validation (2026-10-02)
+
+- Quartus Prime Pro 23.3 synthesis, Fitter and Assembler passed. The SOF SHA-256 is `C21D6CA2D476EC6E3CD44E2E3AC992ED369672E32F8FA5417F1F782640611908`.
+- Timing Analyzer passed as a tool run, but reported a worst setup slack of **-0.445 ns** in the inherited QSFP receiver path and reported that the design is not fully constrained. The PCIe clock group had **+1.861 ns** setup slack. The bitstream is a DMA development image, not a timing-clean network release.
+- The Ubuntu host (kernel `7.0.0-38-generic`) enumerated `1234:1001` at `0000:01:00.0`, negotiated PCIe Gen2 x8, and allocated BAR0 `0x4018000000-0x4018ffffff` and BAR2 `0x4019000000-0x4019ffffff` inside a relocated 32 MiB parent-bridge window.
+- The driver discovered auxiliary application `mqnic.app_12348001.0`. The kernel-owned DMA roundtrips passed at 256 and 4096 bytes. The `/dev/wqfpga0` userspace loopback passed 1 MiB and 32 MiB with byte comparison. These tests establish bidirectional DMA correctness over the tested window; they do not establish sustained bandwidth or accelerator speedup.
+- After the test, `golden_reset.sh --challenge bar-fuzzing` restored `1234:1002` and verified BAR0 `0x42415246` (`BARF`). Merely rescanning the Golden endpoint after the DMA image left BAR0 unreadable until the Golden bridge configuration was restored.

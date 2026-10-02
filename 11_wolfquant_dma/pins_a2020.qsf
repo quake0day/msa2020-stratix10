@@ -1,0 +1,72 @@
+# A-2020 引脚约束 (阶段4 mqnic)
+set_location_assignment PIN_AD6 -to usr_refclk0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to usr_refclk0
+set_location_assignment PIN_BB34 -to pcie_tx[0]
+set_location_assignment PIN_BA36 -to pcie_tx[1]
+set_location_assignment PIN_BB38 -to pcie_tx[2]
+set_location_assignment PIN_AY38 -to pcie_tx[3]
+set_location_assignment PIN_BA40 -to pcie_tx[4]
+set_location_assignment PIN_AV38 -to pcie_tx[5]
+set_location_assignment PIN_AW40 -to pcie_tx[6]
+set_location_assignment PIN_AV42 -to pcie_tx[7]
+set_location_assignment PIN_AU40 -to pcie_tx[8]
+set_location_assignment PIN_AT42 -to pcie_tx[9]
+set_location_assignment PIN_AR40 -to pcie_tx[10]
+set_location_assignment PIN_AP42 -to pcie_tx[11]
+set_location_assignment PIN_AN40 -to pcie_tx[12]
+set_location_assignment PIN_AM42 -to pcie_tx[13]
+set_location_assignment PIN_AL40 -to pcie_tx[14]
+set_location_assignment PIN_AK42 -to pcie_tx[15]
+set_location_assignment PIN_AV30 -to pcie_rx[0]
+set_location_assignment PIN_AY30 -to pcie_rx[1]
+set_location_assignment PIN_BB30 -to pcie_rx[2]
+set_location_assignment PIN_AW32 -to pcie_rx[3]
+set_location_assignment PIN_BA32 -to pcie_rx[4]
+set_location_assignment PIN_AY34 -to pcie_rx[5]
+set_location_assignment PIN_AU36 -to pcie_rx[6]
+set_location_assignment PIN_AW36 -to pcie_rx[7]
+set_location_assignment PIN_AR36 -to pcie_rx[8]
+set_location_assignment PIN_AN36 -to pcie_rx[9]
+set_location_assignment PIN_AT38 -to pcie_rx[10]
+set_location_assignment PIN_AP38 -to pcie_rx[11]
+set_location_assignment PIN_AL36 -to pcie_rx[12]
+set_location_assignment PIN_AM38 -to pcie_rx[13]
+set_location_assignment PIN_AK38 -to pcie_rx[14]
+set_location_assignment PIN_AJ36 -to pcie_rx[15]
+set_location_assignment PIN_AM34 -to pcie_refclk
+set_instance_assignment -name IO_STANDARD HCSL -to pcie_refclk
+set_location_assignment PIN_AC26 -to pcie_perstn
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to pcie_perstn
+set_location_assignment PIN_AG40 -to qsfp0_tx[0]
+set_location_assignment PIN_AF42 -to qsfp0_tx[1]
+set_location_assignment PIN_AD42 -to qsfp0_tx[2]
+set_location_assignment PIN_AC40 -to qsfp0_tx[3]
+set_location_assignment PIN_AG36 -to qsfp0_rx[0]
+set_location_assignment PIN_AD38 -to qsfp0_rx[1]
+set_location_assignment PIN_AB38 -to qsfp0_rx[2]
+set_location_assignment PIN_AC36 -to qsfp0_rx[3]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to qsfp0_tx[*]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to qsfp0_rx[*]
+set_location_assignment PIN_AD34 -to qsfp0_refclk
+set_instance_assignment -name IO_STANDARD HCSL -to qsfp0_refclk
+set_location_assignment PIN_V6 -to led_user_grn[0]
+set_location_assignment PIN_V7 -to led_user_grn[1]
+set_location_assignment PIN_U7 -to led_user_red[0]
+set_location_assignment PIN_U8 -to led_user_red[1]
+set_location_assignment PIN_V8 -to led_qsfp[0]
+set_location_assignment PIN_W8 -to led_qsfp[1]
+set_location_assignment PIN_U9 -to led_qsfp[2]
+set_location_assignment PIN_U10 -to led_qsfp[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to led_user_grn[*]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to led_user_red[*]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to led_qsfp[*]
+set_location_assignment PIN_AC28 -to fpga_i2c_scl
+set_location_assignment PIN_AB28 -to fpga_i2c_sda
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to fpga_i2c_scl
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to fpga_i2c_sda
+set_instance_assignment -name VIRTUAL_PIN ON -to fpga_i2c_req_l
+set_instance_assignment -name VIRTUAL_PIN ON -to fpga_i2c_mux_gnt
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[0]
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[1]
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[2]
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[3]
