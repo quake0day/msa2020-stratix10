@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { msysPath, runTest, validateTemperature, validateReport,
-  recoverInterruptedTest } from './runner.js';
+  recoverInterruptedTest, recheckGolden } from './runner.js';
 
 function monitor(temperature = 40) {
   return {
@@ -127,4 +127,36 @@ test('recovery after a server interruption attempts cleanup and Golden', async (
   assert.equal(current.state, 'failed');
   assert.equal(current.restoreStatus, 'golden');
   assert.deepEqual(calls, ['Unload FPGA drivers', 'Restore Golden image', 'Verify Golden health']);
+});
+
+test('read-only Golden recheck unlocks after exact GOLDEN while preserving failed test history', async () => {
+  const current = { ...job(), state: 'failed', restoreStatus: 'failed', error: 'Program failed' };
+  const oldSteps = [...current.steps];
+  const specs = [];
+  await recheckGolden(current, {
+    command: async (spec) => { specs.push(spec); return { stdout: 'GOLDEN\n', stderr: '' }; },
+  });
+  assert.equal(current.state, 'failed');
+  assert.equal(current.error, 'Program failed');
+  assert.deepEqual(current.steps, oldSteps);
+  assert.equal(current.restoreStatus, 'golden');
+  assert.equal(current.goldenRecheck.state, 'passed');
+  assert.equal(specs.length, 1);
+  assert.equal(specs[0].label, 'Recheck Golden health');
+  assert.deepEqual(specs[0].args.slice(-2), ['--challenge', 'bar-fuzzing']);
+  assert.match(specs[0].args[2], /board_health\.sh$/);
+});
+
+test('Golden recheck rejects extra or non-GOLDEN output and leaves lockout intact', async () => {
+  for (const stdout of ['DEGRADED\n', 'GOLDEN\nDEGRADED\n', ' GOLDEN\n']) {
+    const current = { ...job(), state: 'failed', restoreStatus: 'failed', error: 'Original failure' };
+    await recheckGolden(current, { command: async () => ({ stdout, stderr: '' }) });
+    assert.equal(current.state, 'failed');
+    assert.equal(current.error, 'Original failure');
+    assert.equal(current.restoreStatus, 'failed');
+    assert.equal(current.goldenRecheck.state, 'failed');
+  }
+  const notBlocked = { ...job(), state: 'passed', restoreStatus: 'golden' };
+  await assert.rejects(recheckGolden(notBlocked, { command: async () => { throw new Error('must not run'); } }),
+    /requires a failed test/);
 });

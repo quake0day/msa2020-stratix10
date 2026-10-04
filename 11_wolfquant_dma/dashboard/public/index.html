@@ -45,6 +45,7 @@
             <span id="runButtonLabel">正在连接测试服务</span>
             <span aria-hidden="true">↗</span>
           </button>
+          <button id="recheckButton" class="recheck-button" type="button" hidden disabled>只读复核当前 Golden 状态</button>
           <p class="launch-note" id="runHint">测试前请保持 FPGA 电源与 Linux 主机在线。</p>
         </div>
       </section>
@@ -80,6 +81,7 @@
           <span id="runStarted">开始时间 —</span>
           <span id="runFinished">完成时间 —</span>
           <span id="restoreStatus">Golden 恢复状态 —</span>
+          <span id="recheckStatus" hidden></span>
         </div>
       </section>
 
@@ -135,7 +137,7 @@
           <div><p class="section-kicker">PREVIOUS HARDWARE REPLAY</p><h2 id="history-title">已有实机验证</h2></div>
           <span class="history-date">2026-10-02 · 合成数据</span>
         </div>
-        <p class="history-description">上面的 21 个收盘价样本曾在 2026-10-02 实机返回 vol20 = <strong>0.080265545505</strong>，当时五项原始整数与 CPU 一致；它是历史结果，当前 FPGA 栏位仍等待新测试。下方 399 窗口回放使用另一组合成数据，当前板卡能否测试以页面顶部状态为准。</p>
+        <p class="history-description">上面的 21 个收盘价样本曾在 2026-10-02 实机返回 vol20 = <strong>0.080265545505</strong>，当时五项原始整数与 CPU 一致；这份历史记录仅供比较，当前结果以上方最近一次运行的标记为准。下方 399 窗口回放使用另一组合成数据。</p>
         <div class="history-grid">
           <div><strong>399</strong><span>已完成窗口</span></div>
           <div><strong>全部一致</strong><span>五项整数统计量逐窗对照</span></div>

@@ -2,10 +2,10 @@
 
 const fields = Object.fromEntries(
   [
-    "runButton", "runButtonLabel", "runHint", "notice", "temperatureValue",
+    "runButton", "runButtonLabel", "recheckButton", "runHint", "notice", "temperatureValue",
     "temperatureDetail", "powerValue", "powerDetail", "serviceValue",
     "serviceDetail", "runState", "phaseText", "stepsList", "runStarted",
-    "runFinished", "restoreStatus", "resultTimestamp", "resultsEmpty",
+    "runFinished", "restoreStatus", "recheckStatus", "resultTimestamp", "resultsEmpty",
     "resultsBody", "fpgaVol", "fpgaMatch", "cpuVol", "volError",
     "execTime", "sumsRows", "quantizedVol", "closesChart", "returnError",
     "inputRows"
@@ -118,8 +118,13 @@ function showNotice(message, error = false, network = false) {
 function renderButton() {
   const active = isActive(view.test);
   const blocked = restoreFailed(view.test);
+  const rechecking = stateOf(view.test?.goldenRecheck?.state) === "running";
   fields.runButton.disabled = !view.connected || !view.monitorReady || view.submitting || active || blocked;
   fields.runButton.setAttribute("aria-busy", String(view.submitting || active));
+  fields.recheckButton.hidden = !blocked;
+  fields.recheckButton.disabled = !view.connected || view.submitting || active || rechecking;
+  fields.recheckButton.textContent = rechecking ? "正在只读复核 Golden…" : "只读复核当前 Golden 状态";
+  fields.recheckButton.setAttribute("aria-busy", String(rechecking));
   if (!view.connected) {
     setText(fields.runButtonLabel, "测试服务连接中");
     setText(fields.runHint, "连接恢复后即可运行测试。");
@@ -131,7 +136,7 @@ function renderButton() {
     setText(fields.runHint, "进度和结果会自动更新。");
   } else if (blocked) {
     setText(fields.runButtonLabel, "Golden 状态待检查");
-    setText(fields.runHint, "恢复未获验证，请先检查板卡状态。");
+    setText(fields.runHint, "复核只读取板卡状态，不会重烧程序或控制电源。");
   } else if (!view.monitorReady) {
     setText(fields.runButtonLabel, "安全检查未就绪");
     setText(fields.runHint, view.monitorMessage || "请确认温度监控与 FPGA 供电状态。");
@@ -247,7 +252,15 @@ function renderTest(test, sampleReference) {
   renderSteps(test && test.steps);
   setText(fields.runStarted, `开始时间 ${formatTime(test && test.startedAt)}`);
   setText(fields.runFinished, `完成时间 ${formatTime(test && test.finishedAt)}`);
-  setText(fields.restoreStatus, restorationText(test && test.restoreStatus));
+  const recheck = asObject(test?.goldenRecheck);
+  setText(fields.restoreStatus, recheck.state === "passed"
+    ? "Golden 当前状态已复核；原测试仍记为失败"
+    : restorationText(test && test.restoreStatus));
+  fields.recheckStatus.hidden = !recheck.state;
+  if (recheck.state) {
+    const label = { running: "正在复核", passed: "复核通过", failed: "复核未通过" }[recheck.state] || recheck.state;
+    setText(fields.recheckStatus, `后续只读检查 ${label} · ${formatTime(recheck.finishedAt || recheck.startedAt)}${recheck.state === "failed" ? ` · ${recheck.detail || "请重试"}` : ""}`);
+  }
   if (test && test.error && failed) {
     const error = typeof test.error === "string" ? test.error : (test.error.message || "请查看测试步骤");
     showNotice(`测试失败：${error}`, true);
@@ -478,11 +491,35 @@ async function beginTest() {
   }
 }
 
+async function beginRecheck() {
+  if (!view.connected || view.submitting || isActive(view.test) || !restoreFailed(view.test) ||
+      stateOf(view.test?.goldenRecheck?.state) === "running") return;
+  view.submitting = true;
+  renderButton();
+  try {
+    const result = await requestJson("/api/recheck-golden", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-WQ-Action": "recheck-golden" },
+      body: "{}"
+    }, 15000);
+    if (!result?.test?.id) throw new Error("测试服务没有返回原任务编号");
+    showNotice("正在只读复核当前 Golden 状态，原测试记录会保留。", false);
+    await loadStatus();
+  } catch (error) {
+    showNotice(`无法复核 Golden：${error.message}`, true);
+  } finally {
+    view.submitting = false;
+    renderButton();
+  }
+}
+
 async function pollLoop() {
   await loadStatus();
-  window.setTimeout(pollLoop, isActive(view.test) || view.submitting ? 1200 : 5000);
+  window.setTimeout(pollLoop, isActive(view.test) || view.submitting ||
+    stateOf(view.test?.goldenRecheck?.state) === "running" ? 1200 : 5000);
 }
 
 fields.phaseText.setAttribute("aria-live", "polite");
 fields.runButton.addEventListener("click", beginTest);
+fields.recheckButton.addEventListener("click", beginRecheck);
 pollLoop();

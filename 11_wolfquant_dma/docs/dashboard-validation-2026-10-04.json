@@ -1,0 +1,179 @@
+{
+  "id": "5a98e822-1a86-451b-baeb-42d26fcd2257",
+  "state": "passed",
+  "phase": "complete",
+  "steps": [
+    {
+      "name": "preflight",
+      "status": "passed",
+      "detail": "Linux 7.0.0-38-generic; sudo and matching FPGA modules ready; FPGA 38.4°C; independent power ready"
+    },
+    {
+      "name": "program",
+      "status": "passed",
+      "detail": "FPGA endpoint removed; program the .sof via JTAG, then run /home/quake0day/corundum/wq-dma/reenumerate_dma.sh finish\nPCIe identity: 0x1234:0x1001\nBAR0: 0x6000000000-0x6000ffffff\nBAR2: 0x6001000000-0x6001ffffff\n\n[09:10:16] 烧录 (第 1 次): wolfquant_dma.sof\n[09:10:37] ✓ 配置成功 (device index 1)"
+    },
+    {
+      "name": "dma",
+      "status": "passed",
+      "detail": "BAR0: 0x6000000000-0x6000ffffff (16777216 bytes)\nBAR2: 0x6001000000-0x6001ffffff (16777216 bytes)\nDMA roundtrip verified: 256 bytes\nDMA roundtrip verified: 4096 bytes"
+    },
+    {
+      "name": "moments",
+      "status": "passed",
+      "detail": "PASS: moments v1 CPU reference and little-endian input\nPASS: moments v1 exact FPGA/CPU parity for 12 sizes up to 1024 pairs and invalid-input checks\nInput: 21 completed closes, 20 returns, Q20 x and zero y\nCPU original vol20 (np.std ddof=0 equivalent, annualized): 0.080266589259\nCPU quantized-return vol20: 0.080265545505\nFPGA moments reconstructed vol20: 0.080265545505\nMaximum absolute return quantization error: 4.36414393251e-07\nAbsolute vol20 difference from original: 1.04375372943e-06\nPASS: all five raw integer moments matched the CPU reference\nNear a strategy threshold, use the original CPU vol20 for the final decision.\n20 pairs (160 input bytes), 200 samples:\n  FPGA EXEC end-to-end: p50 231.013 us, p99 239.761 us\n  CPU integer reference: p50 0.084 us, p99 0.095 us (1000 repeats/sample)\n1024 pairs (8192 input bytes), 200 samples:\n  FPGA EXEC end-to-end: p50 243.982 us, p99 250.729 us\n  CPU integer reference: p50 0.702 us, p99 4.179 us (100 repeats/sample)"
+    },
+    {
+      "name": "copy_probe",
+      "status": "passed",
+      "detail": "Fixed dashboard probe copied to Linux host"
+    },
+    {
+      "name": "load_probe_driver",
+      "status": "passed",
+      "detail": "wqfpga_dma loaded"
+    },
+    {
+      "name": "probe",
+      "status": "passed",
+      "detail": "Five FPGA sums match CPU exactly; EXEC 278.9 µs"
+    },
+    {
+      "name": "unload_drivers",
+      "status": "passed",
+      "detail": "FPGA drivers unloaded"
+    },
+    {
+      "name": "restore_golden",
+      "status": "passed",
+      "detail": "[09:10:45] === golden_reset  mode=warm  sof=bar_fuzz.sof  expect=0x1234:0x1002 ===\n[09:10:59] 烧录 (第 1 次): bar_fuzz.sof\n[09:11:10] ✓ 配置成功 (device index 1)\n[09:11:10] 主机: remove 旧设备对象 + rescan + 修桥窗 + 使能\n[09:11:15] ✓ GOLDEN — BAR0x00=0x42415246 == 0x42415246, 板子回到已知好状态"
+    },
+    {
+      "name": "verify_golden",
+      "status": "passed",
+      "detail": "GOLDEN: 1234:1002 and BAR0 magic 0x42415246 verified"
+    }
+  ],
+  "startedAt": "2026-10-04T13:10:01.999Z",
+  "finishedAt": "2026-10-04T13:11:16.477Z",
+  "error": null,
+  "restoreStatus": "golden",
+  "report": {
+    "report_version": 1,
+    "tested_at": "2026-10-04T13:10:44.429741+00:00",
+    "mode": "fpga",
+    "sample": {
+      "label": "21 completed sample closes; 20 close-to-close returns",
+      "closes": [
+        100,
+        100.42,
+        99.87,
+        100.31,
+        101.12,
+        100.92,
+        101.33,
+        100.74,
+        101.26,
+        102.14,
+        101.88,
+        102.57,
+        102.21,
+        101.95,
+        102.73,
+        103.44,
+        103.17,
+        103.68,
+        103.02,
+        103.57,
+        104.11
+      ],
+      "returns": [
+        0.004200000000000017,
+        -0.005476996614220246,
+        0.0044057274456793605,
+        0.008074967600438663,
+        -0.0019778481012658507,
+        0.004062623860483517,
+        -0.005822559952630054,
+        0.00516180266031378,
+        0.00869049970373292,
+        -0.002545525748972049,
+        0.006772673733804454,
+        -0.0035097981866042648,
+        -0.002543782408766177,
+        0.007650809220205995,
+        0.006911320938382106,
+        -0.002610208816705298,
+        0.004943297470194874,
+        -0.0063657407407408445,
+        0.005338769171034723,
+        0.005213865018827907
+      ],
+      "q20": [
+        4404,
+        -5743,
+        4620,
+        8467,
+        -2074,
+        4260,
+        -6105,
+        5413,
+        9113,
+        -2669,
+        7102,
+        -3680,
+        -2667,
+        8022,
+        7247,
+        -2737,
+        5183,
+        -6675,
+        5598,
+        5467
+      ],
+      "q20_y": 0,
+      "pair_count": 20
+    },
+    "cpu": {
+      "sums": {
+        "sum_x": "42546",
+        "sum_y": "0",
+        "sum_x2": "652703916",
+        "sum_y2": "0",
+        "sum_xy": "0"
+      },
+      "vol20_original": 0.08026658925908041,
+      "vol20_quantized": 0.08026554550535098
+    },
+    "fpga": {
+      "sums": {
+        "sum_x": "42546",
+        "sum_y": "0",
+        "sum_x2": "652703916",
+        "sum_y2": "0",
+        "sum_xy": "0"
+      },
+      "vol20": 0.08026554550535098,
+      "exec_us": 278.942,
+      "timing_scope": "device open + GET_CAPS + EXEC + close",
+      "exact_match": true,
+      "reconstruction_match": true
+    },
+    "error": {
+      "vol20_abs": 0.0000010437537294322174,
+      "max_return_quantization": 4.3641439325097647e-7
+    },
+    "metadata": {
+      "app_id": "0x12348001",
+      "kernel_version": "0x00010000",
+      "format": "signed int32 Q20 x; signed int32 Q20 y=0; little-endian",
+      "input_bytes": 160,
+      "output_bytes": 40
+    }
+  },
+  "monitor": {
+    "temperature": 38.375,
+    "sampledAt": "2026-10-04T13:10:00.356Z",
+    "power": "ready"
+  }
+}

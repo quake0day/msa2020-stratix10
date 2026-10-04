@@ -38,8 +38,14 @@ trigger driver unloading, `golden_reset.sh --challenge bar-fuzzing`, and
 `board_health.sh --challenge bar-fuzzing`. The test is marked passed only if
 Golden verification succeeds. If the process is interrupted, the persisted
 job state triggers restoration when the service next starts. A failed Golden
-restoration is shown separately and must be resolved before assuming the card
-is safe. The service does not reboot or shut down the Linux host, control the
+restoration blocks another hardware test. The page then offers a **read-only
+Golden recheck**: it runs only `board_health.sh --challenge bar-fuzzing`, and
+unlocks testing only if the script returns exactly `GOLDEN`. The original job
+remains failed, with its original error and steps intact; the later recheck is
+recorded separately. An interrupted read-only recheck is marked retryable on
+the next successful service start. Interrupted-job recovery starts only after the service
+successfully binds its loopback port, so a duplicate process cannot act on the
+board. The service does not reboot or shut down the Linux host, control the
 FPGA power socket, or turn off its fans.
 
 `GET /api/status` returns `{test,monitor,sample}`. The `sample` is a checked-in
@@ -47,6 +53,9 @@ CPU-only reference generated with `dashboard_probe.py --self-test`.
 `POST /api/test` accepts only `{}`
 with same-origin `Origin`, JSON content type, and `X-WQ-Action: run`; it returns
 HTTP 202 with a new test or HTTP 409 while another test or recovery is active.
+`POST /api/recheck-golden` has the same safeguards with
+`X-WQ-Action: recheck-golden` and is available only when the saved job has a
+failed Golden state. It returns HTTP 202 while the read-only check runs.
 The test object includes `id`, `state`, `phase`, timestamped lifecycle fields,
 `steps`, `error`, `restoreStatus`, and `report`. The report has `sample`, `cpu`,
 `fpga`, and `error` sections. The latest status is saved in ignored

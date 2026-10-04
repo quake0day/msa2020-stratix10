@@ -20,6 +20,10 @@ Once the one-shot self-test passes, unload it and run `host/verify_user_dma.sh` 
 
 Run `dashboard/start-dashboard.ps1` on the Windows JTAG machine, then open `http://127.0.0.1:4174/`. The page always shows the fixed 21-close input, returns, Q20 codes and CPU reference. One click programs the moments image, checks DMA and exact sums, reads the actual five FPGA sums, then restores and verifies Golden. FPGA values appear only after a real probe; an invalid temperature or incomplete Golden restoration blocks further tests. The service listens only on localhost and does not control the FPGA socket or shut down the cooling host. See [dashboard/README.md](dashboard/README.md) for the workflow and API.
 
+The complete browser-triggered run passed on 2026-10-04, including the exact
+five-sum CPU/FPGA comparison and final Golden health check. The measured result
+and job log are in [the 2026-10-04 validation record](docs/validation-2026-10-04.md).
+
 ## Original DMA-only baseline (2026-10-02)
 
 - Quartus Prime Pro 23.3 synthesis, Fitter and Assembler passed. The SOF SHA-256 is `C21D6CA2D476EC6E3CD44E2E3AC992ED369672E32F8FA5417F1F782640611908`.

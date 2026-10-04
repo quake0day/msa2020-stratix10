@@ -394,3 +394,40 @@ export async function recoverInterruptedTest(job, dependencies = {}) {
   update();
   return job;
 }
+
+/** Recheck the current Golden state without programming, unloading, or changing the failed test result. */
+export async function recheckGolden(job, dependencies = {}) {
+  const command = dependencies.command ?? execute;
+  const update = () => dependencies.onUpdate?.(job);
+  if (job?.state !== 'failed' || job.restoreStatus !== 'failed')
+    throw new Error('Golden recheck requires a failed test with unverified restoration');
+  const originalState = job.state;
+  const originalError = job.error;
+  const recheck = {
+    state: 'running',
+    startedAt: new Date().toISOString(),
+    finishedAt: null,
+    detail: 'Checking the current Golden state',
+  };
+  job.goldenRecheck = recheck;
+  update();
+  try {
+    const spec = bashScript(path.join(ctf, 'infra', 'board_health.sh'), 'Recheck Golden health', 45_000);
+    spec.args.push('--challenge', 'bar-fuzzing');
+    const result = await command(spec);
+    if (!/^GOLDEN\r?\n?$/.test(result.stdout))
+      throw new Error(`Expected GOLDEN, got ${excerpt(result.stdout)}`);
+    recheck.state = 'passed';
+    recheck.detail = 'GOLDEN: current PCIe device and BAR0 magic verified';
+    job.restoreStatus = 'golden';
+  } catch (error) {
+    recheck.state = 'failed';
+    recheck.detail = excerpt(error.message, 2000);
+  } finally {
+    recheck.finishedAt = new Date().toISOString();
+    job.state = originalState;
+    job.error = originalError;
+    update();
+  }
+  return job;
+}

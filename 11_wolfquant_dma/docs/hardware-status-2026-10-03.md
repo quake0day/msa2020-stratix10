@@ -33,3 +33,8 @@ configuration and auxiliary power rails, and JTAG signal integrity before
 repeating software programming. Intel's [Stratix 10 Configuration User
 Guide](https://www.intel.com/programmable/technical-pdfs/683762.pdf) describes
 the configuration-state signals and expected power/clock conditions.
+
+Update on 2026-10-04: JTAG programming later succeeded, the moments image
+passed fresh DMA and exact-result tests, and Golden was restored and verified.
+See [validation-2026-10-04.md](validation-2026-10-04.md). This does not yet
+identify the cause of the intermittent programming failures.

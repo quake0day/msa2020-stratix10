@@ -4,7 +4,7 @@ import { readFileSync, mkdirSync, writeFileSync, renameSync, existsSync } from '
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runTest, fetchTemperature, recoverInterruptedTest, validateTemperature } from './runner.js';
+import { runTest, fetchTemperature, recoverInterruptedTest, recheckGolden, validateTemperature } from './runner.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(here, 'public');
@@ -88,6 +88,7 @@ function newJob() {
 export function createDashboardServer(options = {}) {
   const run = options.run ?? runTest;
   const recover = options.recover ?? recoverInterruptedTest;
+  const recheck = options.recheck ?? recheckGolden;
   const monitorReader = options.monitor ?? fetchTemperature;
   const save = options.save ?? persist;
   let job = options.initialJob === undefined ? parseSavedJob() : options.initialJob;
@@ -130,20 +131,6 @@ export function createDashboardServer(options = {}) {
     return monitorPending;
   }
 
-  // If the service was interrupted mid-test, restore Golden before accepting another click.
-  if (job?.state === 'running') {
-    job.error = 'The previous test was interrupted; restoring Golden before another test';
-    job.phase = 'startup_recovery';
-    active = Promise.resolve().then(() => recover(job, { onUpdate: () => save(job) }))
-      .catch((error) => {
-        job.state = 'failed';
-        job.restoreStatus = 'failed';
-        job.error = `${job.error}; recovery failed: ${error.message}`;
-        job.finishedAt = new Date().toISOString();
-        save(job);
-      }).finally(() => { active = null; });
-  }
-
   const server = http.createServer(async (request, response) => {
     const host = request.headers.host?.toLowerCase();
     const origin = request.headers.origin;
@@ -160,6 +147,31 @@ export function createDashboardServer(options = {}) {
 
     if (url.pathname === '/api/status' && request.method === 'GET') {
       sendJson(response, 200, { test: job, monitor: await monitorStatus(), sample: sampleReference });
+      return;
+    }
+    if (url.pathname === '/api/recheck-golden' && request.method === 'POST') {
+      if (origin !== `http://${host}` || request.headers['x-wq-action'] !== 'recheck-golden' ||
+          request.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') {
+        sendJson(response, 403, { error: 'Same-origin JSON action header required' });
+        return;
+      }
+      try { await readEmptyJson(request); }
+      catch (error) { sendJson(response, 400, { error: error.message }); return; }
+      if (active) { sendJson(response, 409, { error: 'A hardware test or recovery is already running', test: job }); return; }
+      if (job?.state !== 'failed' || job.restoreStatus !== 'failed') {
+        sendJson(response, 409, { error: 'No failed Golden state needs rechecking', test: job });
+        return;
+      }
+      const previous = job;
+      active = Promise.resolve().then(() => recheck(previous, { onUpdate: () => save(previous) }))
+        .catch((error) => {
+          previous.goldenRecheck = {
+            state: 'failed', finishedAt: new Date().toISOString(),
+            detail: `Golden recheck failed: ${error.message}`,
+          };
+          save(previous);
+        }).finally(() => { active = null; });
+      sendJson(response, 202, { test: previous });
       return;
     }
     if (url.pathname === '/api/test' && request.method === 'POST') {
@@ -215,6 +227,28 @@ export function createDashboardServer(options = {}) {
         'Content-Length': data.length }));
       response.end(request.method === 'HEAD' ? undefined : data);
     } catch { sendJson(response, 404, { error: 'Not found' }); }
+  });
+
+  // A duplicate process must not touch the board before its loopback bind succeeds.
+  server.on('listening', () => {
+    if (job?.state === 'failed' && job.restoreStatus === 'failed' &&
+        job.goldenRecheck?.state === 'running') {
+      job.goldenRecheck.state = 'failed';
+      job.goldenRecheck.finishedAt = new Date().toISOString();
+      job.goldenRecheck.detail = 'The previous read-only Golden recheck was interrupted; it can be retried';
+      save(job);
+    }
+    if (job?.state !== 'running') return;
+    job.error = 'The previous test was interrupted; restoring Golden before another test';
+    job.phase = 'startup_recovery';
+    active = Promise.resolve().then(() => recover(job, { onUpdate: () => save(job) }))
+      .catch((error) => {
+        job.state = 'failed';
+        job.restoreStatus = 'failed';
+        job.error = `${job.error}; recovery failed: ${error.message}`;
+        job.finishedAt = new Date().toISOString();
+        save(job);
+      }).finally(() => { active = null; });
   });
 
   return {
