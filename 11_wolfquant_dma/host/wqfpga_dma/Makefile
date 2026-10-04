@@ -21,6 +21,7 @@ test:
 	$(CC) -std=c11 -O2 -Wall -Wextra -Werror -o wqfpga-moments-test moments_test.c
 	./wqfpga-tag-test
 	./wqfpga-moments-test --self-test
+	python3 -m unittest dashboard_probe_test -v
 
 clean:
 	$(MAKE) -C $(KDIR) M=$(CURDIR) clean

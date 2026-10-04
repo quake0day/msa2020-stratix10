@@ -16,6 +16,10 @@ On Linux, rebuild `~/corundum/modules/mqnic/mqnic.ko` for the running kernel. Co
 
 Once the one-shot self-test passes, unload it and run `host/verify_user_dma.sh` with the mutually exclusive `host/wqfpga_dma` driver to expose `/dev/wqfpga0`. Its `pread`/`pwrite` calls perform bounded, serialized DMA to the low 8 KiB of the card's 16 KiB scratch RAM. The userspace loopback tool checks varied offsets and lengths over 1 MiB and 32 MiB repeated transfers; the latter also exercises completion-tag wrap. Then run `host/verify_moments.sh` on a moments-capable image for exact FPGA/CPU comparisons over 1–1024 input pairs. `GET_CAPS` and `EXEC` provide the versioned computation interface; [the host-driver README](host/wqfpga_dma/README.md) defines the ABI, and [the research path](docs/wolfquant_acceleration.md) explains how it relates to WolfQuant features. The next milestone is a driver-owned submission queue and batched feature windows. Benchmark full transfer and computation latency before claiming acceleration.
 
+## Local web test dashboard
+
+Run `dashboard/start-dashboard.ps1` on the Windows JTAG machine, then open `http://127.0.0.1:4174/`. The page always shows the fixed 21-close input, returns, Q20 codes and CPU reference. One click programs the moments image, checks DMA and exact sums, reads the actual five FPGA sums, then restores and verifies Golden. FPGA values appear only after a real probe; an invalid temperature or incomplete Golden restoration blocks further tests. The service listens only on localhost and does not control the FPGA socket or shut down the cooling host. See [dashboard/README.md](dashboard/README.md) for the workflow and API.
+
 ## Original DMA-only baseline (2026-10-02)
 
 - Quartus Prime Pro 23.3 synthesis, Fitter and Assembler passed. The SOF SHA-256 is `C21D6CA2D476EC6E3CD44E2E3AC992ED369672E32F8FA5417F1F782640611908`.
