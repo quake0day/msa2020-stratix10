@@ -18,6 +18,7 @@ Stratix 10 `1SG280LN2F43E2VG`）的开源实验工程与上位机工具。
 | **8** | [dct_codec](8_dct_codec/) | **8×8 DCT/IDCT 变换核**（H.264/H.265/JPEG 共用的变换心脏），系数由 `gen_dct.py` 生成、RTL 与主机参考同表 | ✅ **硬件验证**：FDCT/IDCT 逐位对上参考，往返重建成功 |
 | **9** | [ddr4_framebuffer](9_ddr4_framebuffer/) | **PCIe→DDR4 帧缓存**：AXI-Lite↔Avalon 跨时钟桥驱动 EMIF（复用项目 2） | 🟡 **整条通路硬件跑通**：枚举 + 双 DIMM 校准 + ~90% 读写正确；剩 ~10% 间歇读错 = 板载 150MHz 参考时钟把 DDR4 锁死 2400MT/s 下的 DQS 选通时序余量不足（非集成 bug，已定位） |
 | **10** | [h264_encoder](10_h264_encoder/) | **开源 H.264 编码器集成**：把 [openasic-org/xk264](https://github.com/openasic-org/xk264)（复旦，完整 Baseline 编码器）移植到 S10，PCIe BAR 功能外壳（喂 YUV → 取 H.264 码流） | ✅ **硬件验证闭环**：主机写帧 → 硬件编码（50MHz 独立时钟域，双时钟外壳 `h264_wrap_dc`）→ 读回码流**与仿真 golden 逐字节相同** → 软件打包 SPS/PPS → ffmpeg 解码重建原图（QP27，Y 平均误差 0.702）。见 [H264_INTEGRATION.md](10_h264_encoder/H264_INTEGRATION.md) |
+| **11** | [wolfquant_dma](11_wolfquant_dma/) | WolfQuant 固定点统计核、受限 DMA 接口及本机网页一键测试 | ✅ **2026-10-04 实机闭环**：DMA、12 组统计对照、网页显示 FPGA 原始结果及 Golden 恢复；小任务尚无性能优势，见 [验证记录](11_wolfquant_dma/docs/validation-2026-10-04.md) |
 
 **7~10 = 视频计算加速器**（图像预处理 + 视频滤波 + AI 前处理 + 编解码变换 + 帧缓存，
 全部走已验证的 PCIe BAR 框架）。工作流：**先 iverilog 仿真对照 Python 位精确参考，再 Quartus 编译**——

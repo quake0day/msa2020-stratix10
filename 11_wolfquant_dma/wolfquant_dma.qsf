@@ -1,0 +1,229 @@
+set_global_assignment -name FAMILY "Stratix 10"
+set_global_assignment -name DEVICE 1SG280LN2F43E2VG
+set_global_assignment -name TOP_LEVEL_ENTITY fpga
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 23.3
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+# 板卡电源/VID (禁止改动)
+set_global_assignment -name PWRMGT_SLAVE_DEVICE_TYPE OTHER
+set_global_assignment -name PWRMGT_SLAVE_DEVICE0_ADDRESS 60
+set_global_assignment -name PWRMGT_VOLTAGE_OUTPUT_FORMAT "DIRECT FORMAT"
+set_global_assignment -name PWRMGT_DIRECT_FORMAT_COEFFICIENT_M 1
+set_global_assignment -name PWRMGT_TRANSLATED_VOLTAGE_VALUE_UNIT MILLIVOLTS
+set_global_assignment -name USE_PWRMGT_SCL SDM_IO14
+set_global_assignment -name USE_PWRMGT_SDA SDM_IO11
+set_global_assignment -name ACTIVE_SERIAL_CLOCK AS_FREQ_115MHZ_IOSC
+set_global_assignment -name USE_CONF_DONE SDM_IO16
+set_global_assignment -name USE_INIT_DONE SDM_IO0
+# IPs (全部按 A-2020 器件生成)
+set_global_assignment -name IP_FILE ip/pcie.ip
+set_global_assignment -name IP_FILE ip/iopll_100mhz.ip
+set_global_assignment -name IP_FILE ip/ref_div.ip
+set_global_assignment -name IP_FILE ip/reset_release.ip
+set_global_assignment -name IP_FILE ip/eth_xcvr_gxt.ip
+set_global_assignment -name IP_FILE ip/eth_xcvr_gxt_pll.ip
+set_global_assignment -name IP_FILE ip/eth_xcvr_gxt_buf.ip
+set_global_assignment -name IP_FILE ip/eth_xcvr_gx.ip
+set_global_assignment -name IP_FILE ip/eth_xcvr_gx_pll.ip
+set_global_assignment -name IP_FILE ip/eth_xcvr_reset.ip
+set_global_assignment -name VERILOG_FILE rtl/fpga.v
+set_global_assignment -name VERILOG_FILE rtl/fpga_core.v
+set_global_assignment -name VERILOG_FILE rtl/mqnic_app_block_dma_bench.v
+set_global_assignment -name VERILOG_FILE rtl/dma_bench.v
+set_global_assignment -name VERILOG_FILE rtl/sync_signal.v
+set_global_assignment -name VERILOG_FILE rtl/eth_xcvr_phy_wrapper.v
+set_global_assignment -name VERILOG_FILE rtl/eth_xcvr_phy_quad_wrapper.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_core_pcie_s10.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_core_pcie.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_core.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_interface.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_interface_tx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_interface_rx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_port.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_port_tx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_port_rx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_egress.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_ingress.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_l2_egress.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_l2_ingress.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_rx_queue_map.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_ptp.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_ptp_clock.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_ptp_perout.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_rb_clk_info.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_port_map_phy_xgmii.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/cpl_write.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/cpl_op_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/desc_fetch.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/desc_op_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/queue_manager.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/cpl_queue_manager.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tx_fifo.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/rx_fifo.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tx_req_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tx_engine.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/rx_engine.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tx_checksum.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/rx_hash.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/rx_checksum.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/stats_counter.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/stats_collect.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/stats_pcie_if.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/stats_pcie_tlp.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/stats_dma_if_pcie.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/stats_dma_latency.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/mqnic_tx_scheduler_block_rr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tx_scheduler_rr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tdma_scheduler.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tdma_ber.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/common/rtl/tdma_ber_ch.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_mac_10g.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/axis_xgmii_rx_64.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/axis_xgmii_tx_64.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/mac_ctrl_rx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/mac_ctrl_tx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/mac_pause_ctrl_rx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/mac_pause_ctrl_tx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_rx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_rx_if.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_rx_frame_sync.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_rx_ber_mon.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_rx_watchdog.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_tx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/eth_phy_10g_tx_if.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/xgmii_baser_dec_64.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/xgmii_baser_enc_64.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/lfsr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/ptp_td_phc.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/ptp_td_leaf.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/rtl/ptp_perout.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_interconnect.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_crossbar.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_crossbar_addr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_crossbar_rd.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_crossbar_wr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_reg_if.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_reg_if_rd.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_reg_if_wr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_register_rd.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/axil_register_wr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/arbiter.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/axi/rtl/priority_encoder.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_adapter.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_arb_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_async_fifo.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_async_fifo_adapter.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_demux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_fifo.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_fifo_adapter.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_pipeline_fifo.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/axis_register.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/eth/lib/axis/rtl/sync_reset.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_axil_master.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_demux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_demux_bar.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_fc_count.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_fifo.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_fifo_raw.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_tlp_fifo_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_msix.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/irq_rate_limit.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_pcie.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_pcie_rd.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_pcie_wr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_mux_rd.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_mux_wr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_if_desc_mux.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_ram_demux_rd.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_ram_demux_wr.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_psdpram.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_client_axis_sink.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/dma_client_axis_source.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_s10_if.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_s10_if_rx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_s10_if_tx.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pcie_s10_cfg.v
+set_global_assignment -name VERILOG_FILE H:/led_ctrl/05_corundum/corundum/fpga/lib/pcie/rtl/pulse_merge.v
+# A-2020 引脚约束 (阶段4 mqnic)
+set_location_assignment PIN_AD6 -to usr_refclk0
+set_instance_assignment -name IO_STANDARD "1.8 V" -to usr_refclk0
+set_location_assignment PIN_BB34 -to pcie_tx[0]
+set_location_assignment PIN_BA36 -to pcie_tx[1]
+set_location_assignment PIN_BB38 -to pcie_tx[2]
+set_location_assignment PIN_AY38 -to pcie_tx[3]
+set_location_assignment PIN_BA40 -to pcie_tx[4]
+set_location_assignment PIN_AV38 -to pcie_tx[5]
+set_location_assignment PIN_AW40 -to pcie_tx[6]
+set_location_assignment PIN_AV42 -to pcie_tx[7]
+set_location_assignment PIN_AU40 -to pcie_tx[8]
+set_location_assignment PIN_AT42 -to pcie_tx[9]
+set_location_assignment PIN_AR40 -to pcie_tx[10]
+set_location_assignment PIN_AP42 -to pcie_tx[11]
+set_location_assignment PIN_AN40 -to pcie_tx[12]
+set_location_assignment PIN_AM42 -to pcie_tx[13]
+set_location_assignment PIN_AL40 -to pcie_tx[14]
+set_location_assignment PIN_AK42 -to pcie_tx[15]
+set_location_assignment PIN_AV30 -to pcie_rx[0]
+set_location_assignment PIN_AY30 -to pcie_rx[1]
+set_location_assignment PIN_BB30 -to pcie_rx[2]
+set_location_assignment PIN_AW32 -to pcie_rx[3]
+set_location_assignment PIN_BA32 -to pcie_rx[4]
+set_location_assignment PIN_AY34 -to pcie_rx[5]
+set_location_assignment PIN_AU36 -to pcie_rx[6]
+set_location_assignment PIN_AW36 -to pcie_rx[7]
+set_location_assignment PIN_AR36 -to pcie_rx[8]
+set_location_assignment PIN_AN36 -to pcie_rx[9]
+set_location_assignment PIN_AT38 -to pcie_rx[10]
+set_location_assignment PIN_AP38 -to pcie_rx[11]
+set_location_assignment PIN_AL36 -to pcie_rx[12]
+set_location_assignment PIN_AM38 -to pcie_rx[13]
+set_location_assignment PIN_AK38 -to pcie_rx[14]
+set_location_assignment PIN_AJ36 -to pcie_rx[15]
+set_location_assignment PIN_AM34 -to pcie_refclk
+set_instance_assignment -name IO_STANDARD HCSL -to pcie_refclk
+set_location_assignment PIN_AC26 -to pcie_perstn
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to pcie_perstn
+set_location_assignment PIN_AG40 -to qsfp0_tx[0]
+set_location_assignment PIN_AF42 -to qsfp0_tx[1]
+set_location_assignment PIN_AD42 -to qsfp0_tx[2]
+set_location_assignment PIN_AC40 -to qsfp0_tx[3]
+set_location_assignment PIN_AG36 -to qsfp0_rx[0]
+set_location_assignment PIN_AD38 -to qsfp0_rx[1]
+set_location_assignment PIN_AB38 -to qsfp0_rx[2]
+set_location_assignment PIN_AC36 -to qsfp0_rx[3]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to qsfp0_tx[*]
+set_instance_assignment -name IO_STANDARD "HIGH SPEED DIFFERENTIAL I/O" -to qsfp0_rx[*]
+set_location_assignment PIN_AD34 -to qsfp0_refclk
+set_instance_assignment -name IO_STANDARD HCSL -to qsfp0_refclk
+set_location_assignment PIN_V6 -to led_user_grn[0]
+set_location_assignment PIN_V7 -to led_user_grn[1]
+set_location_assignment PIN_U7 -to led_user_red[0]
+set_location_assignment PIN_U8 -to led_user_red[1]
+set_location_assignment PIN_V8 -to led_qsfp[0]
+set_location_assignment PIN_W8 -to led_qsfp[1]
+set_location_assignment PIN_U9 -to led_qsfp[2]
+set_location_assignment PIN_U10 -to led_qsfp[3]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to led_user_grn[*]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to led_user_red[*]
+set_instance_assignment -name IO_STANDARD "1.8 V" -to led_qsfp[*]
+set_location_assignment PIN_AC28 -to fpga_i2c_scl
+set_location_assignment PIN_AB28 -to fpga_i2c_sda
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to fpga_i2c_scl
+set_instance_assignment -name IO_STANDARD "3.0-V LVTTL" -to fpga_i2c_sda
+set_instance_assignment -name VIRTUAL_PIN ON -to fpga_i2c_req_l
+set_instance_assignment -name VIRTUAL_PIN ON -to fpga_i2c_mux_gnt
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[0]
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[1]
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[2]
+set_instance_assignment -name VIRTUAL_PIN ON -to qsfp_irq_n[3]
+set_global_assignment -name LAST_QUARTUS_VERSION "23.3.0 Pro Edition"
+set_global_assignment -name SDC_FILE qsfp_mqnic.sdc
+set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION ON
+
+# Expose the Corundum application DMA port on BAR2.
+set_parameter -name APP_ID "32'h12348001"
+set_parameter -name APP_ENABLE 1
+set_global_assignment -name SEED 2
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 4

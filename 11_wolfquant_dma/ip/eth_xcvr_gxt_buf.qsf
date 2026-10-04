@@ -1,0 +1,7 @@
+set_global_assignment -name TOP_LEVEL_ENTITY eth_xcvr_gxt_buf
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 23.3.0
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:14:00  JULY 24, 2026"
+set_global_assignment -name LAST_QUARTUS_VERSION "23.3.0 Pro Edition"
+set_global_assignment -name FAMILY "Stratix 10"
+set_global_assignment -name DEVICE 1SG280LN2F43E2VG
+set_global_assignment -name IP_FILE eth_xcvr_gxt_buf.ip

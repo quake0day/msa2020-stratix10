@@ -1,0 +1,58 @@
+{
+  "engine_version": "discovery-python-1",
+  "feature": "vol20; prior 21 completed closes; np.std(ddof=0)*sqrt(252)",
+  "calendar_scope": "each selected symbol's own sessions; pair-strategy common-session alignment is not modeled",
+  "symbols": [
+    "KO"
+  ],
+  "window_count": 399,
+  "first_decision_time": "2023-02-01T21:00:00Z",
+  "last_decision_time": "2024-08-12T21:00:00Z",
+  "exact_moments_parity": true,
+  "future_mutation_checks": 590,
+  "max_abs_vol20_error": 2.5251940496962e-06,
+  "p99_abs_vol20_error": 2.284211974595829e-06,
+  "max_abs_return_quantization_error": 4.740217070167002e-07,
+  "threshold_disagreements": [
+    {
+      "threshold": 0.1,
+      "operator": "gt",
+      "count": 0
+    },
+    {
+      "threshold": 0.1,
+      "operator": "lt",
+      "count": 0
+    }
+  ],
+  "threshold_disagreement_examples": [],
+  "cpu_feature_latency": {
+    "p50_us": 8.772,
+    "p99_us": 30.238,
+    "total_ms": 4.796481,
+    "windows_per_second": 83185.98572578521
+  },
+  "candidate_feature_latency": {
+    "p50_us": 232.724,
+    "p99_us": 270.182,
+    "total_ms": 93.329255,
+    "windows_per_second": 4275.18681039509
+  },
+  "candidate_over_cpu_total_time": 19.457859835158317,
+  "firmware_capabilities": {
+    "abi_version": 1,
+    "app_id": "0x12348001",
+    "features": 1,
+    "moments_kernel_version": "0x00010000",
+    "moments_max_pairs": 1024,
+    "moments_q_frac_bits": 20,
+    "moments_input_min": -8388608,
+    "moments_input_max": 8388607
+  },
+  "mode": "fpga",
+  "device": "/dev/wqfpga0",
+  "dataset_source": "research.example_dataset:seed-1729",
+  "dataset_sha256": "47139723299ea69024c3ee9958bdbc7fadcd77b4716b45dce068aa5c705bfa4a",
+  "dataset_synthetic": true,
+  "dataset_adjusted": true
+}

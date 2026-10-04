@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b13">
+  <meta name="description" content="WolfQuant FPGA 本地硬件测试与结果对照">
+  <title>WolfQuant · FPGA 测试台</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23070b13'/%3E%3Cpath d='m12 19 7 26h8l5-17 5 17h8l7-26h-7l-5 18-5-18h-7l-5 18-5-18Z' fill='%2338e8c6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="WolfQuant FPGA 测试台首页">
+        <span class="brand-mark" aria-hidden="true">W<span>Q</span></span>
+        <span class="brand-name">WOLFQUANT <small>FPGA LAB</small></span>
+      </a>
+      <nav aria-label="页面导航">
+        <a class="nav-link" href="http://127.0.0.1:4173/" target="_blank" rel="noopener noreferrer">温度监控 <span aria-hidden="true">↗</span></a>
+        <span class="local-badge"><i aria-hidden="true"></i> 本机测试台</span>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> STRATIX 10 · MOMENTS V1</p>
+          <h1 id="page-title">看见每一笔输入，<br><em>核对每一个 FPGA 结果。</em></h1>
+          <p class="hero-description">使用固定的 21 个已完成收盘价，生成 20 个收益率并送入 FPGA。测试结束后，逐项展示原始整数统计量、CPU 对照值和 WolfQuant 的 <code>vol20</code> 结果。</p>
+          <div class="hero-tags" aria-label="测试特性">
+            <span>真实硬件返回</span><span>CPU 精确对照</span><span>自动恢复 Golden</span>
+          </div>
+        </div>
+        <div class="launch-panel">
+          <div class="launch-top">
+            <span class="panel-label">ONE-CLICK HARDWARE TEST</span>
+            <span class="panel-index">01 / 01</span>
+          </div>
+          <div class="launch-icon" aria-hidden="true"><span>∑</span><i></i></div>
+          <h2>一键运行完整测试</h2>
+          <p>程序加载、计算校验和 Golden 恢复由测试服务依次执行。Linux 主机及散热风扇保持运行。</p>
+          <button id="runButton" class="run-button" type="button" disabled>
+            <span id="runButtonLabel">正在连接测试服务</span>
+            <span aria-hidden="true">↗</span>
+          </button>
+          <button id="recheckButton" class="recheck-button" type="button" hidden disabled>只读复核当前 Golden 状态</button>
+          <p class="launch-note" id="runHint">测试前请保持 FPGA 电源与 Linux 主机在线。</p>
+        </div>
+      </section>
+
+      <section class="telemetry" aria-label="实时状态">
+        <article class="telemetry-card">
+          <div class="telemetry-heading"><span>FPGA 温度</span><span class="telemetry-icon" aria-hidden="true">°</span></div>
+          <p class="telemetry-value"><strong id="temperatureValue">--.-</strong><span>°C</span></p>
+          <p id="temperatureDetail" class="telemetry-detail">等待温度监控…</p>
+        </article>
+        <article class="telemetry-card">
+          <div class="telemetry-heading"><span>独立供电</span><span class="telemetry-icon" aria-hidden="true">↯</span></div>
+          <p class="telemetry-value telemetry-word" id="powerValue">连接中</p>
+          <p id="powerDetail" class="telemetry-detail">等待插座状态…</p>
+        </article>
+        <article class="telemetry-card">
+          <div class="telemetry-heading"><span>测试服务</span><span class="telemetry-icon" aria-hidden="true">◎</span></div>
+          <p class="telemetry-value telemetry-word" id="serviceValue">连接中</p>
+          <p id="serviceDetail" class="telemetry-detail">正在读取本机服务状态…</p>
+        </article>
+      </section>
+
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <section class="workflow surface" aria-labelledby="workflow-title">
+        <div class="section-header">
+          <div><p class="section-kicker">RUN STATUS</p><h2 id="workflow-title">测试进度</h2></div>
+          <div id="runState" class="state-pill idle"><i aria-hidden="true"></i><span>等待运行</span></div>
+        </div>
+        <p id="phaseText" class="phase-text">点击“一键运行完整测试”后，进度会显示在这里。</p>
+        <ol id="stepsList" class="steps-list" aria-label="测试步骤"><li class="step pending"><span class="step-icon" aria-hidden="true">1</span><div><strong>等待测试</strong><small>测试步骤将在运行时更新</small></div></li></ol>
+        <div class="workflow-footer">
+          <span id="runStarted">开始时间 —</span>
+          <span id="runFinished">完成时间 —</span>
+          <span id="restoreStatus">Golden 恢复状态 —</span>
+          <span id="recheckStatus" hidden></span>
+        </div>
+      </section>
+
+      <section class="results" aria-labelledby="results-title">
+        <div class="section-header results-heading">
+          <div><p class="section-kicker">MEASURED OUTPUT</p><h2 id="results-title">输入与硬件返回</h2></div>
+          <span id="resultTimestamp" class="result-timestamp">等待测试数据</span>
+        </div>
+
+        <div id="resultsEmpty" class="empty-state surface">
+          <div class="empty-symbol" aria-hidden="true">{ }</div>
+          <h3>一次测试，完整的数据链路</h3>
+          <p>运行后，这里会显示实际传给 FPGA 的数据和它返回的五项整数结果。页面不会把历史数字当作当前测试。</p>
+        </div>
+
+        <div id="resultsBody" hidden>
+          <div class="summary-grid">
+            <article class="summary-card summary-primary">
+              <p>FPGA 重建的 vol20</p>
+              <strong id="fpgaVol">—</strong>
+              <span id="fpgaMatch" class="match-indicator">等待精确校验</span>
+            </article>
+            <article class="summary-card"><p>CPU 原始 vol20</p><strong id="cpuVol">—</strong><span>使用原始浮点收益率</span></article>
+            <article class="summary-card"><p>量化误差 · vol20</p><strong id="volError">—</strong><span>FPGA 与原始 CPU 值的绝对差</span></article>
+            <article class="summary-card"><p>FPGA 调用总耗时</p><strong id="execTime">—</strong><span>含设备打开、能力检查、执行和关闭</span></article>
+          </div>
+
+          <div class="result-grid">
+            <article class="surface comparison-panel">
+              <div class="panel-heading"><div><p class="section-kicker">EXACT INTEGER PARITY</p><h3>五项原始统计量</h3></div><span class="panel-unit">Q20 / Q40</span></div>
+              <p class="panel-description">原始有符号 64 位整数以十进制原样显示；逐项比较 CPU 与 FPGA，不经过浮点转换。</p>
+              <div class="table-scroll"><table class="comparison-table"><caption class="sr-only">CPU 与 FPGA 五项原始整数统计量对照</caption><thead><tr><th scope="col">统计量</th><th scope="col">CPU 参考值</th><th scope="col">FPGA 返回值</th><th scope="col">校验</th></tr></thead><tbody id="sumsRows"></tbody></table></div>
+              <div class="comparison-foot"><span>CPU 量化后 vol20</span><strong id="quantizedVol">—</strong></div>
+            </article>
+            <article class="surface chart-panel">
+              <div class="panel-heading"><div><p class="section-kicker">TEST VECTOR</p><h3>21 个已完成收盘价</h3></div><span class="panel-unit">CHRONOLOGICAL</span></div>
+              <div class="chart-wrap"><svg id="closesChart" role="img" aria-label="测试收盘价走势图" viewBox="0 0 800 240" preserveAspectRatio="none"></svg></div>
+              <div class="chart-axis"><span>第 1 个收盘价</span><span>第 21 个收盘价</span></div>
+              <div class="chart-foot"><div><span>收益率最大量化误差</span><strong id="returnError">—</strong></div><div><span>输入格式</span><strong>Q20 · x / 0</strong></div></div>
+            </article>
+          </div>
+
+          <article class="surface input-panel">
+            <div class="panel-heading"><div><p class="section-kicker">TRANSMITTED DATA</p><h3>逐项输入数据</h3></div><span class="panel-unit">21 CLOSES → 20 RETURNS</span></div>
+            <p class="panel-description">收盘价按时间从早到晚排列。第 2–21 行的收益率和 Q20 数值分别来自相邻两个收盘价。</p>
+            <div class="table-scroll input-scroll"><table class="input-table"><caption class="sr-only">测试收盘价、收益率与实际送往 FPGA 的 Q20 输入</caption><thead><tr><th scope="col">序号</th><th scope="col">已完成收盘价</th><th scope="col">相对前一日收益率</th><th scope="col">送往 FPGA 的 Q20 x / y</th></tr></thead><tbody id="inputRows"></tbody></table></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="history surface" aria-labelledby="history-title">
+        <div class="section-header">
+          <div><p class="section-kicker">PREVIOUS HARDWARE REPLAY</p><h2 id="history-title">已有实机验证</h2></div>
+          <span class="history-date">2026-10-02 · 合成数据</span>
+        </div>
+        <p class="history-description">上面的 21 个收盘价样本曾在 2026-10-02 实机返回 vol20 = <strong>0.080265545505</strong>，当时五项原始整数与 CPU 一致；这份历史记录仅供比较，当前结果以上方最近一次运行的标记为准。下方 399 窗口回放使用另一组合成数据。</p>
+        <div class="history-grid">
+          <div><strong>399</strong><span>已完成窗口</span></div>
+          <div><strong>全部一致</strong><span>五项整数统计量逐窗对照</span></div>
+          <div><strong>232.724 µs</strong><span>FPGA 路径 p50</span></div>
+          <div><strong>8.772 µs</strong><span>CPU 路径 p50</span></div>
+        </div>
+        <p class="history-foot">当时 399 个窗口的 FPGA 路径总耗时约为 CPU 的 19.46 倍，vol20 最大绝对误差为 2.5252×10⁻⁶。<a href="/history-2026-10-02.json" target="_blank" rel="noopener noreferrer">查看完整历史记录 ↗</a></p>
+      </section>
+    </main>
+
+    <footer class="site-footer"><span>WOLFQUANT / MSA-2020 · 本机研发测试</span><span>仅展示计算验证结果，不发出交易指令</span></footer>
+  </div>
+</body>
+</html>

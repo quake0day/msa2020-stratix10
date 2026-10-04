@@ -1,0 +1,13 @@
+output_files/
+sim/work/
+sim/transcript.log
+build_dma.log
+fit_retry.log
+sta.log
+asm.log
+qdb/
+dni/
+tmp-clearbox/
+ip/*/
+serv_req_info.txt
+*.qpf.bak
